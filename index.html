@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Interactive PMS Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
     <style>
@@ -10,8 +10,11 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background: #1a36b4ff; /* Presentation background */
+            color: white; /* White text */
         }
-        h1 {
+        h1, h2, h3 {
+            color: white;
             text-align: center;
             margin: 20px 0;
         }
@@ -26,11 +29,10 @@
             margin: 20px 0;
         }
         .display-box {
-            background-color: #f4f4f4;
+            background-color: rgba(255,255,255,0.1);
             padding: 20px;
             text-align: center;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .graph {
             margin: 30px 0;
@@ -39,6 +41,7 @@
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            color: white; /* White text in table */
         }
         th, td {
             border: 1px solid #ddd;
@@ -46,11 +49,23 @@
             padding: 10px;
         }
         th {
-            background-color: #f4f4f4;
+            background-color: rgba(255,255,255,0.2);
         }
         .total-row {
             font-weight: bold;
-            background-color: #f4f4f4;
+            background-color: rgba(255,255,255,0.2);
+        }
+        button {
+            margin-bottom: 20px;
+            background: #ffffff;
+            color: #1a36b4;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #eeeeee;
         }
     </style>
 </head>
@@ -82,7 +97,7 @@
                 <th>Quarter</th>
                 <th>Individuals >50 Units</th>
                 <th>Firms >50 Units</th>
-                <th>Corporates 50-100 Units</th>
+                <th>Firms 50-100 Units</th>
                 <th>Corporates 100-300 Units</th>
                 <th>Corporates 300-500 Units</th>
                 <th>Corporates 500-2500 Units</th>
@@ -91,7 +106,7 @@
             </tr>
         </thead>
         <tbody>
-            <!-- Rows will be dynamically generated -->
+            <!-- Rows dynamically generated -->
         </tbody>
         <tfoot>
             <tr class="total-row">
@@ -128,28 +143,28 @@
 <script>
     // Predefined Quarterly Data
     const data = [
-        [100, 100, 0, 0, 0, 0, 0],
-        [100, 100, 30, 0, 0, 0, 0],
-        [100, 100, 30, 20, 0, 0, 0],
-        [100, 100, 60, 30, 10, 0, 0],
-        [150, 150, 60, 50, 10, 3, 0],
-        [150, 150, 60, 50, 20, 3, 0],
-        [150, 150, 80, 70, 20, 3, 0],
-        [150, 150, 80, 70, 30, 5, 0],
-        [150, 150, 80, 100, 30, 5, 0],
-        [200, 200, 100, 100, 40, 7, 1],
-        [200, 200, 100, 110, 40, 7, 1],
-        [200, 200, 100, 120, 40, 10, 1],
-        [200, 250, 100, 150, 40, 10, 1],
-        [200, 250, 100, 150, 40, 15, 1],
-        [250, 250, 120, 150, 40, 15, 1],
-        [250, 250, 120, 150, 40, 20, 1]
+        [100, 100,   0,   0,   0,   0,  0],
+        [100, 100,  30,   0,   0,   0,  0],
+        [100, 100,  30,  20,   0,   0,  0],
+        [100, 100,  60,  30,  10,   0,  0],
+        [150, 150,  60,  50,  10,   3,  0],
+        [150, 150,  60,  50,  20,   3,  0],
+        [150, 150,  80,  70,  20,   3,  0],
+        [150, 150,  80,  70,  30,   5,  0],
+        [150, 150,  80, 100,  30,   5,  0],
+        [200, 200, 100, 100,  40,   7,  1],
+        [200, 200, 100, 110,  40,   7,  1],
+        [200, 200, 100, 120,  40,  10,  1],
+        [200, 250, 100, 150,  40,  10,  1],
+        [200, 250, 100, 150,  40,  15,  1],
+        [250, 250, 120, 150,  40,  15,  1],
+        [250, 250, 120, 150,  40,  20,  1]
     ];
 
     const segmentNames = [
         "Individuals >50 Units",
         "Firms >50 Units",
-        "Corporates 50-100 Units",
+        "Firms 50-100 Units",
         "Corporates 100-300 Units",
         "Corporates 300-500 Units",
         "Corporates 500-2500 Units",
@@ -159,149 +174,99 @@
     const avgRevenuePerSegment = [12, 50, 100, 400, 800, 1750, 4500];
     const avgUnitsPerSegment = [10, 20, 75, 200, 400, 1000, 3000];
 
-    // Updated Revenue Calculation Function
+    // Calculate all metrics based on given formulas
     function calculateMetrics() {
+        const quarters = data.length; // 16 quarters
+
         let existingRevenue = 0;
         const lastMonthRevenue = [];
         const newRevenue = [];
-        const quarterlyRevenue = [];
+        const totalRev = [];
 
-        for (let i = 0; i < data.length; i++) {
-            // Calculate Last Month Revenue for this Quarter
-            const lastMonth = data[i].reduce((sum, count, j) => sum + count * avgRevenuePerSegment[j], 0);
-            lastMonthRevenue.push(lastMonth);
+        for (let i = 0; i < quarters; i++) {
+            // lastMonthRevenue
+            const lmRev = data[i].reduce((sum, count, j) => sum + (count * avgRevenuePerSegment[j]), 0);
+            lastMonthRevenue.push(lmRev);
 
-            // Calculate New Revenue
-            const newRev = lastMonth + lastMonth * 0.5 + lastMonth * 0.2;
-            newRevenue.push(newRev);
+            // newRevenue
+            const nRev = lmRev * 1.7; 
+            newRevenue.push(nRev);
 
-            // Calculate Existing Revenue
-            const existingRev =
-                (i > 0 ? lastMonthRevenue[i - 1] * 3 * 0.9 : 0) + (i > 0 ? existingRevenue * 0.95 : 0);
+            // existingRevenue
+            let eRev = 0;
+            if (i > 0) {
+                eRev = (lastMonthRevenue[i-1] * 3 * 0.9) + (existingRevenue * 0.95);
+            }
+            existingRevenue = eRev;
 
-            // Total Revenue for this Quarter
-            const totalRev = newRev + existingRev;
-            quarterlyRevenue.push(totalRev);
-
-            // Update Existing Revenue for Next Quarter
-            existingRevenue = existingRev;
+            // totalRev
+            const tRev = nRev + eRev;
+            totalRev.push(tRev);
         }
 
-        const totalRevenue = quarterlyRevenue.reduce((a, b) => a + b, 0);
-        const totalBusinesses = data.flat().reduce((a, b) => a + b, 0);
-        const totalUnits = data.reduce((total, row, i) =>
-            total + row.reduce((sum, count, j) => sum + count * avgUnitsPerSegment[j], 0)
-        , 0);
+        // Segment-Level Quarterly Revenue Distribution
+        const segmentRevenue = totalRev.map((tRev, i) => {
+            const lmRev = lastMonthRevenue[i];
+            if (lmRev === 0) {
+                // If no revenue, all zero
+                return data[i].map(()=>0);
+            } else {
+                return data[i].map((count,j) => {
+                    const segLmRev = count * avgRevenuePerSegment[j];
+                    return tRev * (segLmRev / lmRev);
+                });
+            }
+        });
 
-        return {totalRevenue,
-            quarterlyRevenue,
-            newRevenue,
-            lastMonthRevenue,
-            totalBusinesses,
-            totalUnits
+        // Quarterly segment units
+        const segmentUnits = data.map((row) =>
+            row.map((count, j) => count * avgUnitsPerSegment[j])
+        );
+
+        // Compute totals
+        const totalRevenue4Years = totalRev.reduce((a,b)=>a+b,0);
+        const totalBusinessesCumulative = data.flat().reduce((a,b)=>a+b,0);
+        const totalUnitsCumulative = segmentUnits.reduce((sum,row)=>sum+row.reduce((a,b)=>a+b,0),0);
+
+        // Yearly Aggregations
+        const yearlyRevenue = [];
+        const yearlySegmentRevenue = [];
+        const yearlyBusinesses = [];
+        const yearlyUnits = [];
+
+        for (let y = 0; y < 4; y++) {
+            const startQ = y*4;
+            const endQ = startQ+4;
+            const yearQuarters = totalRev.slice(startQ, endQ);
+            yearlyRevenue.push(yearQuarters.reduce((a,b)=>a+b,0));
+
+            const ySegRev = segmentNames.map((_, j) =>
+                segmentRevenue.slice(startQ,endQ).reduce((sum,qRow)=>sum+qRow[j],0)
+            );
+            yearlySegmentRevenue.push(ySegRev);
+
+            const q4Index = endQ - 1;
+            const yearEndBusinesses = data[q4Index].slice();
+            yearlyBusinesses.push(yearEndBusinesses);
+
+            const yearEndUnits = yearEndBusinesses.map((bCount,j) => bCount * avgUnitsPerSegment[j]);
+            yearlyUnits.push(yearEndUnits);
+        }
+
+        return {
+            totalRev,
+            segmentRevenue,
+            segmentUnits,
+            yearlyRevenue,
+            yearlySegmentRevenue,
+            yearlyBusinesses,
+            yearlyUnits,
+            totalRevenue4Years,
+            totalBusinessesCumulative,
+            totalUnitsCumulative
         };
     }
 
-    // Function to generate quarterly and yearly graphs
-    function generateGraphs(metrics) {
-        const { quarterlyRevenue, newRevenue, lastMonthRevenue } = metrics;
-
-        // Quarterly Revenue and Growth
-        const growthPercentages = quarterlyRevenue.map((rev, i) =>
-            i > 0 ? ((rev - quarterlyRevenue[i - 1]) / quarterlyRevenue[i - 1]) * 100 : 0
-        );
-        Plotly.newPlot("quarterly-revenue-trend", [
-            { x: Array.from({ length: 16 }, (_, i) => `Q${i + 1}`), y: quarterlyRevenue, type: "bar", name: "Total Revenue" },
-            { x: Array.from({ length: 16 }, (_, i) => `Q${i + 1}`), y: growthPercentages, type: "scatter", mode: "lines+markers", name: "Growth %" }
-        ], { title: "Quarterly Total Revenue and Growth Trends" });
-
-        // Stacked Revenue by Segment
-        const stackedRevenueData = segmentNames.map((name, i) =>
-            ({ x: Array.from({ length: 16 }, (_, j) => `Q${j + 1}`), y: data.map((row) => row[i] * avgRevenuePerSegment[i]), type: "bar", name })
-        );
-        Plotly.newPlot("quarterly-stacked-revenue", stackedRevenueData, {
-            title: "Quarterly Revenue Distribution by Segment",
-            barmode: "stack",
-            xaxis: { title: "Quarters" },
-            yaxis: { title: "Revenue ($)" }
-        });
-
-        // Stacked Businesses by Segment
-        const stackedBusinessesData = segmentNames.map((name, i) =>
-            ({ x: Array.from({ length: 16 }, (_, j) => `Q${j + 1}`), y: data.map((row) => row[i]), type: "bar", name })
-        );
-        Plotly.newPlot("quarterly-stacked-businesses", stackedBusinessesData, {
-            title: "Quarterly Business Distribution by Segment",
-            barmode: "stack",
-            xaxis: { title: "Quarters" },
-            yaxis: { title: "Businesses" }
-        });
-
-        // Stacked Units by Segment
-        const stackedUnitsData = segmentNames.map((name, i) =>
-            ({ x: Array.from({ length: 16 }, (_, j) => `Q${j + 1}`), y: data.map((row) => row[i] * avgUnitsPerSegment[i]), type: "bar", name })
-        );
-        Plotly.newPlot("quarterly-stacked-units", stackedUnitsData, {
-            title: "Quarterly Units Distribution by Segment",
-            barmode: "stack",
-            xaxis: { title: "Quarters" },
-            yaxis: { title: "Units" }
-        });
-
-        // Yearly Metrics
-        const yearlyData = Array.from({ length: 4 }, (_, yearIndex) =>
-            data.slice(yearIndex * 4, (yearIndex + 1) * 4).reduce((sum, quarter) => {
-                return sum.map((value, i) => value + quarter[i]);
-            }, Array(segmentNames.length).fill(0))
-        );
-        const yearlyRevenue = yearlyData.map((row) =>
-            row.reduce((sum, count, i) => sum + count * avgRevenuePerSegment[i], 0)
-        );
-        const yearlyGrowthPercentages = yearlyRevenue.map((rev, i) =>
-            i > 0 ? ((rev - yearlyRevenue[i - 1]) / yearlyRevenue[i - 1]) * 100 : 0
-        );
-
-        // Yearly Revenue and Growth
-        Plotly.newPlot("yearly-revenue-trend", [
-            { x: Array.from({ length: 4 }, (_, i) => `Year ${i + 1}`), y: yearlyRevenue, type: "bar", name: "Total Revenue" },
-            { x: Array.from({ length: 4 }, (_, i) => `Year ${i + 1}`), y: yearlyGrowthPercentages, type: "scatter", mode: "lines+markers", name: "Growth %" }
-        ], { title: "Yearly Total Revenue and Growth Trends" });
-
-        // Yearly Stacked Revenue by Segment
-        const yearlyStackedRevenueData = segmentNames.map((name, i) =>
-            ({ x: Array.from({ length: 4 }, (_, j) => `Year ${j + 1}`), y: yearlyData.map((row) => row[i] * avgRevenuePerSegment[i]), type: "bar", name })
-        );
-        Plotly.newPlot("yearly-stacked-revenue", yearlyStackedRevenueData, {
-            title: "Yearly Revenue Distribution by Segment",
-            barmode: "stack",
-            xaxis: { title: "Years" },
-            yaxis: { title: "Revenue ($)" }
-        });
-
-        // Yearly Stacked Businesses by Segment
-        const yearlyStackedBusinessesData = segmentNames.map((name, i) =>
-            ({ x: Array.from({ length: 4 }, (_, j) => `Year ${j + 1}`), y: yearlyData.map((row) => row[i]), type: "bar", name })
-        );
-        Plotly.newPlot("yearly-stacked-businesses", yearlyStackedBusinessesData, {
-            title: "Yearly Business Distribution by Segment",
-            barmode: "stack",
-            xaxis: { title: "Years" },
-            yaxis: { title: "Businesses" }
-        });
-
-        // Yearly Stacked Units by Segment
-        const yearlyStackedUnitsData = segmentNames.map((name, i) =>
-            ({ x: Array.from({ length: 4 }, (_, j) => `Year ${j + 1}`), y: yearlyData.map((row) => row[i] * avgUnitsPerSegment[i]), type: "bar", name })
-        );
-        Plotly.newPlot("yearly-stacked-units", yearlyStackedUnitsData, {
-            title: "Yearly Units Distribution by Segment",
-            barmode: "stack",
-            xaxis: { title: "Years" },
-            yaxis: { title: "Units" }
-        });
-    }
-
-    // Function to update totals dynamically
     function updateTotals() {
         data.forEach((row, index) => {
             const updatedRow = row.map((_, i) =>
@@ -316,38 +281,197 @@
             document.getElementById(`col-total-${i}`).innerText = colTotal;
         }
 
-        const overallTotal = data.reduce((sum, row) => sum + row.reduce((a, b) => a + b, 0), 0);
+        const overallTotal = data.reduce((sum, row) => sum + row.reduce((a,b) => a+b, 0), 0);
         document.getElementById("col-total-overall").innerText = overallTotal;
     }
 
-    // Function to update dashboard
-    function updateDashboard() {
-        updateTotals(); // Update totals dynamically
-        const metrics = calculateMetrics(); // Calculate updated metrics
-        generateGraphs(metrics); // Update all visuals
+    function generateGraphs(metrics) {
+        const {
+            totalRev,
+            segmentRevenue,
+            segmentUnits,
+            yearlyRevenue,
+            yearlySegmentRevenue,
+            yearlyBusinesses,
+            yearlyUnits
+        } = metrics;
 
-        // Update Display Boxes
-        document.getElementById("total-revenue").innerText = `$${metrics.totalRevenue.toLocaleString()}`;
-        document.getElementById("total-businesses").innerText = metrics.totalBusinesses.toLocaleString();
-        document.getElementById("total-units").innerText = metrics.totalUnits.toLocaleString();
+        const quarters = Array.from({length:16}, (_,i)=>`Q${i+1}`);
+        const years = Array.from({length:4}, (_,i)=>`Year ${i+1}`);
+
+        // Quarterly growth %
+        const quarterlyGrowth = totalRev.map((val, i) => i>0 ? ((val - totalRev[i-1])/totalRev[i-1])*100 : 0);
+
+        // Yearly growth %
+        const yearlyGrowth = yearlyRevenue.map((val, i) => i>0 ? ((val - yearlyRevenue[i-1])/yearlyRevenue[i-1])*100 : 0);
+
+        // Common layout for all charts
+        const commonLayout = {
+            paper_bgcolor: '#1a36b4',
+            plot_bgcolor: '#1a36b4',
+            font: { color: 'white', size: 14 },
+            margin: {l:60, r:60, t:60, b:80},
+            height: 500,
+            legend: { font: { color: 'white' } },
+            xaxis: { tickfont: { color: 'white' }, titlefont: { color: 'white' } },
+            yaxis: { tickfont: { color: 'white' }, titlefont: { color: 'white' } }
+        };
+
+        // Quarterly Revenue Trend
+        Plotly.newPlot("quarterly-revenue-trend", [
+            { x: quarters, y: totalRev, type: "bar", name: "Total Revenue", marker: {color: 'orange'} },
+            { x: quarters, y: quarterlyGrowth, type: "scatter", mode: "lines+markers", name: "Growth %", line: {color: 'white'} }
+        ], {
+            ...commonLayout,
+            title: "Quarterly Total Revenue and Growth Trends",
+            xaxis: { ...commonLayout.xaxis, title: "Quarters" },
+            yaxis: { ...commonLayout.yaxis, title: "Revenue / Growth (%)" }
+        });
+
+        // Quarterly Stacked Revenue by Segment
+        const quarterlyStackedRevenueData = segmentNames.map((name, s) => ({
+            x: quarters,
+            y: segmentRevenue.map(qRow => qRow[s]),
+            type: "bar",
+            name
+        }));
+        Plotly.newPlot("quarterly-stacked-revenue", quarterlyStackedRevenueData, {
+            ...commonLayout,
+            title: "Quarterly Revenue Distribution by Segment",
+            barmode: "stack",
+            xaxis: { ...commonLayout.xaxis, title: "Quarters" },
+            yaxis: { ...commonLayout.yaxis, title: "Revenue ($)" }
+        });
+
+        // Quarterly Stacked Businesses by Segment
+        const quarterlyStackedBusinessesData = segmentNames.map((name, s) => ({
+            x: quarters,
+            y: data.map(row => row[s]),
+            type: "bar",
+            name
+        }));
+        Plotly.newPlot("quarterly-stacked-businesses", quarterlyStackedBusinessesData, {
+            ...commonLayout,
+            title: "Quarterly Business Distribution by Segment",
+            barmode: "stack",
+            xaxis: { ...commonLayout.xaxis, title: "Quarters" },
+            yaxis: { ...commonLayout.yaxis, title: "Businesses" }
+        });
+
+        // Quarterly Stacked Units by Segment
+        const quarterlyStackedUnitsData = segmentNames.map((name, s) => ({
+            x: quarters,
+            y: segmentUnits.map(qRow => qRow[s]),
+            type: "bar",
+            name
+        }));
+        Plotly.newPlot("quarterly-stacked-units", quarterlyStackedUnitsData, {
+            ...commonLayout,
+            title: "Quarterly Units Distribution by Segment",
+            barmode: "stack",
+            xaxis: { ...commonLayout.xaxis, title: "Quarters" },
+            yaxis: { ...commonLayout.yaxis, title: "Units" }
+        });
+
+        // Yearly Revenue Trend
+        Plotly.newPlot("yearly-revenue-trend", [
+            { x: years, y: yearlyRevenue, type: "bar", name: "Total Revenue", marker: {color: 'orange'} },
+            { x: years, y: yearlyGrowth, type: "scatter", mode: "lines+markers", name: "Growth %", line: {color: 'white'} }
+        ], {
+            ...commonLayout,
+            title: "Yearly Total Revenue and Growth Trends",
+            xaxis: { ...commonLayout.xaxis, title: "Years" },
+            yaxis: { ...commonLayout.yaxis, title: "Revenue / Growth (%)" }
+        });
+
+        // Yearly Stacked Revenue by Segment
+        const yearlyStackedRevenueData = segmentNames.map((name, s) => ({
+            x: years,
+            y: yearlySegmentRevenue.map(yRow => yRow[s]),
+            type: "bar",
+            name
+        }));
+        Plotly.newPlot("yearly-stacked-revenue", yearlyStackedRevenueData, {
+            ...commonLayout,
+            title: "Yearly Revenue Distribution by Segment",
+            barmode: "stack",
+            xaxis: { ...commonLayout.xaxis, title: "Years" },
+            yaxis: { ...commonLayout.yaxis, title: "Revenue ($)" }
+        });
+
+        
+
+        // Yearly Stacked Units by Segment (Year-End)
+        const yearlyStackedUnitsData = segmentNames.map((name, s) => ({
+            x: years,
+            y: yearlyUnits.map(yRow => yRow[s]),
+            type: "bar",
+            name
+        }));
+        Plotly.newPlot("yearly-stacked-units", yearlyStackedUnitsData, {
+            ...commonLayout,
+            title: "Yearly Units Distribution by Segment (Year-End)",
+            barmode: "stack",
+            xaxis: { ...commonLayout.xaxis, title: "Years" },
+            yaxis: { ...commonLayout.yaxis, title: "Units" }
+        });
+        // For each year y, sum the businesses in all four quarters for each segment
+        const yearlySegmentBusinesses = [];
+        for (let y = 0; y < 4; y++) {
+        const startQ = y * 4;
+         const endQ = startQ + 4;
+     // Sum each segment's business counts over these 4 quarters
+        const yBus = segmentNames.map((_, j) => {
+        return data.slice(startQ, endQ).reduce((sum, qData) => sum + qData[j], 0);
+         });
+         yearlySegmentBusinesses.push(yBus);
+        }
+        // Yearly Stacked Businesses by Segment (Summation method)
+const yearlyStackedBusinessesData = segmentNames.map((name, s) => ({
+    x: years,
+    y: yearlySegmentBusinesses.map(yRow => yRow[s]),
+    type: "bar",
+    name
+}));
+
+Plotly.newPlot("yearly-stacked-businesses", yearlyStackedBusinessesData, {
+    ...commonLayout,
+    title: "Yearly Business Distribution by Segment (Aggregated)",
+    barmode: "stack",
+    xaxis: { ...commonLayout.xaxis, title: "Years" },
+    yaxis: { ...commonLayout.yaxis, title: "Businesses" }
+});
+
+
     }
 
-    // Populate table dynamically
+    function updateDashboard() {
+        updateTotals();
+        const metrics = calculateMetrics();
+
+        // Update Display Boxes
+        document.getElementById("total-revenue").innerText = `$${metrics.totalRevenue4Years.toLocaleString()}`;
+        document.getElementById("total-businesses").innerText = metrics.totalBusinessesCumulative.toLocaleString();
+        document.getElementById("total-units").innerText = metrics.totalUnitsCumulative.toLocaleString();
+
+        generateGraphs(metrics);
+    }
+
+    // Populate table initially
     const tableBody = document.querySelector("#data-table tbody");
     data.forEach((row, index) => {
         const tr = document.createElement("tr");
-        const quarterCell = `<td>${`Q${index + 1}`}</td>`;
-        const dataCells = row
-            .map((value, i) => `<td><input type="number" value="${value}" id="input-${index}-${i}" /></td>`)
-            .join("");
-        const totalCell = `<td id="total-${index}">${row.reduce((a, b) => a + b, 0)}</td>`;
+        const quarterCell = `<td>Q${index+1}</td>`;
+        const dataCells = row.map((value, i) =>
+            `<td><input type="number" value="${value}" id="input-${index}-${i}" style="width:60px;" /></td>`
+        ).join("");
+        const totalCell = `<td id="total-${index}">${row.reduce((a,b)=>a+b,0)}</td>`;
         tr.innerHTML = quarterCell + dataCells + totalCell;
         tableBody.appendChild(tr);
     });
 
-    // Initial render of the dashboard
+    // Initial render
     updateDashboard();
 </script>
 </body>
 </html>
-
